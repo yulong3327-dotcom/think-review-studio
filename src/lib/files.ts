@@ -2,6 +2,8 @@ import JSZip from 'jszip';
 import readXlsxFile, { readSheetNames } from 'read-excel-file';
 import { parseThinkText, validateThink } from './importer';
 import { makeDocument } from './storage';
+import { validateTableHeaders } from './dingtalk';
+import { prepareTableFile, readTableFile } from './table-files';
 import type { ImportProblem, ReviewDocument } from '../types';
 
 export async function importFiles(files: File[]): Promise<{ documents: ReviewDocument[]; problems: ImportProblem[] }> {
@@ -22,6 +24,11 @@ export async function importFiles(files: File[]): Promise<{ documents: ReviewDoc
     try {
       if (/\.xlsx$/i.test(file.name)) {
         const sheets = await readSheetNames(file);
+        if(sheets.includes('练习')) {
+          const rows=await readTableFile({id:'',name:file.name,bytes:await file.arrayBuffer()});
+          let matches=false;try{validateTableHeaders(rows[0]||[]);matches=true;}catch{/* Generic spreadsheet. */}
+          if(matches){const result=await prepareTableFile(file);documents.push(...result.documents);problems.push(...result.problems);continue;}
+        }
         for (const sheet of sheets) {
           const rows = await readXlsxFile(file, {sheet});
           let candidates = 0;
@@ -41,8 +48,17 @@ export async function importFiles(files: File[]): Promise<{ documents: ReviewDoc
         const entries = Object.values(zip.files).filter(entry => !entry.dir && /\.(json|jsonl|txt|csv)$/i.test(entry.name));
         if (!entries.length) problems.push({source:file.name,message:'压缩包内没有 JSON、JSONL、TXT 或 CSV 文件。'});
         for (const entry of entries) await consume(await entry.async('string'), `${file.name}/${entry.name}`);
-      } else if (/\.(json|jsonl|txt|csv)$/i.test(file.name)) {
-        await consume(await file.text(), file.name);
+      } else if (/\.(json|jsonl|txt|csv|tsv)$/i.test(file.name)) {
+        const text=await file.text();
+        if(/\.(csv|tsv)$/i.test(file.name)) {
+          const rows=await readTableFile({id:'',name:file.name,bytes:await file.arrayBuffer()});
+          let matches=false;try{validateTableHeaders(rows[0]||[]);matches=true;}catch{/* Generic spreadsheet. */}
+          if(matches){const result=await prepareTableFile(file);documents.push(...result.documents);problems.push(...result.problems);continue;}
+          if(rows[0]?.some(cell=>/最终-think结果|1v1.*think.*参考/i.test(cell)))throw new Error('检测到练习表，但表头位置不匹配。请从「钉钉表格任务」导入完整「练习」分表。');
+          let candidates=0;
+          for(const [i,row] of rows.entries())for(const cell of row)if(/"{1,2}steps"{1,2}\s*:/.test(cell)){candidates++;await consume(cell,`${file.name} / 第 ${i+1} 行`);}
+          if(!candidates)await consume(text,file.name);
+        }else await consume(text, file.name);
       } else problems.push({source:file.name,message:'暂不支持该格式。支持 JSON、JSONL、TXT、CSV、XLSX 和 ZIP。'});
     } catch (error) { problems.push({source:file.name,message:(error as Error).message}); }
   }

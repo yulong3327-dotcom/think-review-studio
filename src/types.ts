@@ -30,6 +30,17 @@ export interface ReviewDocument {
   importedAt: string;
   modifiedAt?: string;
   demo?: boolean;
+  tableBinding?: {
+    workbookId: string;
+    sheet: string;
+    row: number;
+    tid: string;
+    scriptTeacher: string;
+    referenceRaw: string;
+    finalRaw: string;
+    fileId?: string;
+    fileName?: string;
+  };
 }
 export interface ImportProblem { source: string; message: string; }
 export interface ImportResult { documents: ThinkData[]; errors: string[]; }
