@@ -1,5 +1,32 @@
 import type { ImportResult, ThinkData } from '../types';
 
+// A question is one complete explanation, not one step within an explanation.
+export function splitThinkQuestions(data:ThinkData):ThinkData[] {
+  if(!Array.isArray(data.steps))return [data];
+  const groups=new Map<string,ThinkData['steps']>();
+  for(const step of data.steps){const key=String(step?.['question-index']??1);const steps=groups.get(key)||[];steps.push(step);groups.set(key,steps);}
+  if(groups.size<2)return [data];
+  return [...groups].map(([key,steps])=>({...data,steps,...(Array.isArray(data.func_list)?{func_list:data.func_list.filter(fn=>fn?.['question-index']===undefined||String(fn['question-index'])===key)}:{})}));
+}
+
+export function questionTitle(data:ThinkData,index:number):string {
+  for(const key of ['title','name','question_text','stem','question'])if(typeof data[key]==='string'&&(data[key] as string).trim())return (data[key] as string).trim().slice(0,80);
+  const answer=data.steps.find(step=>step?.type==='答案');
+  const content=(data.steps.find(step=>step?.content&&step.type!=='答案')?.content||answer?.content||'').split('\n')[0].replace(/\$[^$]*\$/g,'').replace(/^\s*\d+[.、]\s*/,'').trim();
+  return `第 ${index+1} 题${content?` · ${content.slice(0,28)}${content.length>28?'…':''}`:''}`;
+}
+
+export function analyzeThinkPaste(raw:string):ImportResult {
+  if(!raw.trim())return {documents:[],errors:[]};
+  const parsed=parseThinkText(raw),documents:ThinkData[]=[],errors=[...parsed.errors];
+  parsed.documents.forEach(data=>splitThinkQuestions(data).forEach(question=>{
+    const issues=validateThink(question);
+    if(issues.length)errors.push(`第 ${documents.length+1} 题：${issues.join('；')}`);
+    if(!issues.some(issue=>/必须是|至少需要|缺少/.test(issue)))documents.push(question);
+  }));
+  return {documents,errors};
+}
+
 function unwrap(value: unknown, depth = 0): ThinkData[] {
   if (depth > 5) return [];
   if (typeof value === 'string') {

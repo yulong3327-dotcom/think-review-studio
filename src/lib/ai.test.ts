@@ -1,5 +1,5 @@
 import { describe,it,expect } from 'vitest';
-import { buildAiMessages,parseAiProposal,sameData } from './ai';
+import { aiEndpoint,buildAiMessages,parseAiProposal,sameData } from './ai';
 import { allowedLocalRequest } from '../../scripts/ai-proxy';
 import type { ThinkData } from '../types';
 const original:ThinkData={custom:{keep:true},steps:[{content:'长度 2m',narration:'原始旁白',extra:'保留'}],func_list:[{name:'draw',func:'function draw(container,cb) { cb(); }',extra:3}]};
@@ -12,6 +12,7 @@ describe('AI 修改校验',()=>{
   it('图片与选中区域进入模型上下文',()=>{const messages=buildAiMessages(original,{stepIndex:0,kind:'drawing',region:{x:0,y:0,width:0.5,height:0.5},image:'data:image/png;base64,abc'},'修复图形');expect(messages[1].content).toEqual(expect.arrayContaining([expect.objectContaining({type:'image_url'})]));});
 });
 describe('本地代理限制',()=>{
+  it('线上直接调用指定服务，本地调用同源代理',()=>{expect(aiEndpoint('yulong3327-dotcom.github.io')).toBe('https://ccproxy.yukework.com/v1/chat/completions');expect(aiEndpoint('127.0.0.1')).toBe('/api/ai/chat/completions');});
   it('允许同源本地请求',()=>expect(allowedLocalRequest('127.0.0.1:5173','http://127.0.0.1:5173')).toBe(true));
   it.each([['evil.com','https://evil.com'],['localhost:5173','https://evil.com'],['localhost:5173','http://localhost:9999'],['localhost:5173',undefined],['localhost.evil.com','http://localhost.evil.com']])('拒绝非本地同源请求', (host,origin)=>expect(allowedLocalRequest(host,origin)).toBe(false));
 });
