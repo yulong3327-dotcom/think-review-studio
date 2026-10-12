@@ -1,0 +1,37 @@
+{
+  "steps": [
+    {
+      "question-index": 1,
+      "type": "解题关键",
+      "content": "1. 结合生活经验，回忆常见物品的长度。\n2. 运用排除法，剔除明显不合理的选项。",
+      "narration": "这道题是一道生活常识估算题。解题的关键在于我们要结合平时积累的生活经验，回想一下常见物品的大致长度，然后用排除法把明显不合理的选项去掉。"
+    },
+    {
+      "question-index": 1,
+      "type": "分步讲解",
+      "content": "第一步：分析选项 $A$、$C$、$D$。\n$2\\mathrm{cm}$ 大约是两根手指的宽度，课本不可能这么窄。\n$80\\mathrm{cm}$ 接近普通课桌的宽度，$120\\mathrm{cm}$ 接近小学生的平均身高，课本不可能这么宽。\n因此，$A$、$C$、$D$ 均不符合实际。",
+      "narration": "首先我们来看选项A、C和D。2厘米大约只有我们两根手指并拢那么宽，物理课本肯定比这宽多了，所以A不对。而80厘米差不多是一张单人课桌的宽度，120厘米更是接近一个小学生的平均身高了，课本怎么可能有这么宽呢？所以这三个选项都明显不符合实际，我们可以直接排除。"
+    },
+    {
+      "question-index": 1,
+      "type": "分步讲解",
+      "content": "第二步：分析选项 $B$。\n成年人张开手掌，一拃（大拇指到中指）的长度大约是 $15\\mathrm{cm}$ 到 $20\\mathrm{cm}$。\n物理课本的宽度与此相近，大约为 $18\\mathrm{cm}$，符合实际情况。",
+      "narration": "接着我们来看选项B。大家可以伸出手看一看，成年人张开手掌，从大拇指指尖到中指指尖的一拃距离，大约就是15到20厘米。我们的物理课本宽度刚好跟一拃差不多长，所以大概就是18厘米，这个数据是非常符合实际情况的。",
+      "func": "ai_drawBookBook1",
+      "func_params": []
+    },
+    {
+      "question-index": 1,
+      "type": "答案",
+      "content": "正确答案是 $B$。",
+      "narration": "综合以上的分析，我们可以得出，本题的正确答案就是选项B。"
+    }
+  ],
+  "func_list": [
+    {
+      "question-index": 1,
+      "name": "ai_drawBookBook1",
+      "func": "function ai_drawBookBook1(container, cb) {\n    const dpr = window.devicePixelRatio || 1;\n    const logicalWidth = 640;\n    const padding = 40;\n    const fontSize = 32;\n    const unit = 1;\n    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;\n    function updateBounds(x, y, r = 0) {\n      minX = Math.min(minX, x - r);\n      maxX = Math.max(maxX, x + r);\n      minY = Math.min(minY, y - r);\n      maxY = Math.max(maxY, y + r);\n    }\n    function updateTextBounds(text, x, y, align = 'center') {\n        const estCharWidth = fontSize * 0.6;\n        const width = text.length * estCharWidth;\n        if (align === 'left') updateBounds(x + width, y, 0);\n        else if (align === 'right') updateBounds(x - width, y, 0);\n        else { updateBounds(x - width/2, y, 0); updateBounds(x + width/2, y, 0); }\n        updateBounds(x, y - fontSize, 0);\n        updateBounds(x, y + fontSize/3, 0);\n    }\n    const bookW = 180;\n    const bookH = 260;\n    const centerX = logicalWidth / 2;\n    const centerY = bookH / 2 + padding;\n    const bookLeft = centerX - bookW / 2;\n    const bookRight = centerX + bookW / 2;\n    const bookTop = centerY - bookH / 2;\n    const bookBottom = centerY + bookH / 2;\n    updateBounds(bookLeft, bookTop, 0);\n    updateBounds(bookRight + 12, bookBottom + 12, 0);\n    const lineY = bookBottom + 50;\n    updateBounds(bookLeft, lineY + 8, 0);\n    updateBounds(bookRight, lineY + 8, 0);\n    updateTextBounds(\"18 厘米\", centerX, lineY - 15, \"center\");\n    if (minX === Infinity) { minX = 0; maxX = 640; minY = 0; maxY = 300; }\n    const contentW = maxX - minX;\n    const contentH = maxY - minY;\n    const maxSafeW = logicalWidth - padding * 2;\n    let safeScale = 1;\n    if (contentW > maxSafeW) { safeScale = maxSafeW / contentW; }\n    const finalHeight = (contentH * safeScale) + padding * 2;\n    const wrapper = document.createElement('div');\n    wrapper.style.display = 'flex';\n    wrapper.style.flexDirection = 'column';\n    wrapper.style.alignItems = 'center';\n    wrapper.style.width = '100%';\n    const cvs = document.createElement('canvas');\n    cvs.style.width = '100%';\n    cvs.style.height = 'auto';\n    cvs.width = logicalWidth * dpr;\n    cvs.height = finalHeight * dpr;\n    wrapper.appendChild(cvs);\n    container.appendChild(wrapper);\n    const ctx = cvs.getContext('2d');\n    ctx.scale(dpr, dpr);\n    ctx.lineCap = 'round';\n    ctx.lineJoin = 'round';\n    const offsetX = (logicalWidth - contentW * safeScale) / 2 - minX * safeScale;\n    const offsetY = padding - minY * safeScale;\n    ctx.translate(offsetX, offsetY);\n    ctx.scale(safeScale, safeScale);\n    ctx.fillStyle = '#FFFFFF';\n    ctx.strokeStyle = '#2C3E50';\n    ctx.lineWidth = 6;\n    ctx.beginPath();\n    ctx.rect(bookLeft + 12, bookTop + 12, bookW, bookH);\n    ctx.fill();\n    ctx.stroke();\n    ctx.fillStyle = 'rgba(72, 219, 251, 0.2)';\n    ctx.beginPath();\n    ctx.rect(bookLeft, bookTop, bookW, bookH);\n    ctx.fill();\n    ctx.stroke();\n    ctx.beginPath();\n    ctx.moveTo(bookLeft + 25, bookTop);\n    ctx.lineTo(bookLeft + 25, bookBottom);\n    ctx.lineWidth = 4;\n    ctx.stroke();\n    ctx.fillStyle = '#2C3E50';\n    ctx.font = 'bold 44px \"Times New Roman\"';\n    ctx.textAlign = 'center';\n    ctx.textBaseline = 'middle';\n    ctx.fillText(\"物 理\", centerX + 12, centerY);\n    ctx.strokeStyle = '#FF6B6B';\n    ctx.fillStyle = '#FF6B6B';\n    ctx.lineWidth = 4;\n    ctx.beginPath();\n    ctx.moveTo(bookLeft, lineY);\n    ctx.lineTo(bookRight, lineY);\n    ctx.stroke();\n    ctx.beginPath();\n    ctx.moveTo(bookLeft + 15, lineY - 8);\n    ctx.lineTo(bookLeft, lineY);\n    ctx.lineTo(bookLeft + 15, lineY + 8);\n    ctx.stroke();\n    ctx.beginPath();\n    ctx.moveTo(bookRight - 15, lineY - 8);\n    ctx.lineTo(bookRight, lineY);\n    ctx.lineTo(bookRight - 15, lineY + 8);\n    ctx.stroke();\n    ctx.font = `italic ${fontSize}px \"Times New Roman\"`;\n    ctx.textAlign = 'center';\n    ctx.textBaseline = 'bottom';\n    ctx.fillText(\"18 厘米\", centerX, lineY - 15);\n    if (typeof cb === 'function') cb();\n}"
+    }
+  ]
+}
