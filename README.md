@@ -8,7 +8,7 @@ Think JSON 批量审核网站。JSON 与完整可视化直接对应，支持在�
 
 在线版可批量导入、编辑、审核、导出；数据保存在当前浏览器的 IndexedDB。
 
-线上版已接入 AI 直连 `https://ccproxy.yukework.com/v1/chat/completions`，可配置密钥与模型。接口必须允许来自 `https://yulong3327-dotcom.github.io` 的 CORS 请求，并对 OPTIONS 预检返回允许 POST、Authorization、Content-Type 的响应。截至实测，当前接口 OPTIONS 返回 404，POST 未包含 Access-Control-Allow-Origin，浏览器会拦截直连。服务方开放 CORS 后无需改网站即可使用。本地版仍通过同源代理正常调用。
+线上版已接入 AI 直连 `https://ccproxy.yukework.com/v1/chat/completions`，可配置密钥与模型。接口必须允许来自 `https://yulong3327-dotcom.github.io` 的 CORS 请求，并对 OPTIONS 预检返回允许 POST、Authorization、Content-Type 的响应。截至实测，当前接口 OPTIONS 返回 404，POST 未包含 Access-Control-Allow-Origin，浏览器会拦截直连。服务方开放 CORS 后无需改网站即可使用。本地版仍通过同源代理正常调用。[接口侧配置说明](docs/AI接口跨域配置.md)。
 
 Windows 安装 Node.js 24 或更新版本后，下载仓库 ZIP、解压，双击 **启动审核网站.cmd**。保持命令窗口打开，访问 http://127.0.0.1:5173 。也可执行：
 

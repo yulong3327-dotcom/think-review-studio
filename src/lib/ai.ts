@@ -52,9 +52,10 @@ export function buildAiMessages(data:ThinkData,selection:AiSelection,problem:str
   return [{role:'system',content:instruction},{role:'user',content:image?[{type:'text',text},{type:'image_url',image_url:{url:image}}]:text}];
 }
 export async function requestAi(data:ThinkData,selection:AiSelection,problem:string,settings:AiSettings,signal:AbortSignal):Promise<AiProposal> {
+  const requestSignal=AbortSignal.any([signal,AbortSignal.timeout(180_000)]);
   let response:Response;
-  try {response=await fetch(aiEndpoint(location.hostname),{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${settings.apiKey}`},body:JSON.stringify({model:settings.model,messages:buildAiMessages(data,selection,problem),stream:false,max_completion_tokens:16000}),signal});}
-  catch(error){if(signal.aborted)throw error;throw new Error(aiEndpoint(location.hostname).startsWith('https:')?'浏览器无法连接 AI 接口。请检查网络；接口服务方需允许本站跨域访问（CORS），包括 OPTIONS、Authorization 和 Content-Type。':'无法连接本地 AI 服务，请确认启动窗口仍在运行。');}
+  try {response=await fetch(aiEndpoint(location.hostname),{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${settings.apiKey}`},body:JSON.stringify({model:settings.model,messages:buildAiMessages(data,selection,problem),stream:false,max_completion_tokens:16000}),signal:requestSignal});}
+  catch(error){if(signal.aborted)throw error;if(requestSignal.aborted)throw new Error('AI 请求超过 3 分钟，请检查连接后重试。');throw new Error(aiEndpoint(location.hostname).startsWith('https:')?'浏览器无法连接 AI 接口。请检查网络；接口服务方需允许本站跨域访问（CORS），包括 OPTIONS、Authorization 和 Content-Type。':'无法连接本地 AI 服务，请确认启动窗口仍在运行。');}
   if(!response.ok){const labels:Record<number,string>={401:'密钥无效或已过期',403:'无权使用该服务或模型',429:'请求过于频繁或额度不足',552:'模型上游服务暂时不可用',502:'连接 AI 服务失败',504:'AI 请求超时'};throw new Error(labels[response.status]||`AI 请求失败（${response.status}）`);}
   const body=await response.json();
   const message=body.choices?.[0]?.message?.content;
