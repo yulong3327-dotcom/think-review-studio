@@ -31,7 +31,9 @@ export function parseAiProposal(content:string,original:ThinkData):AiProposal {
       target[field]=item.value;
     } else if(fn){
       const target=data.func_list?.[Number(fn[1])];if(!target||typeof item.value!=='string')throw new Error('AI 绘图修改无效。');
-      try{parse(item.value,{ecmaVersion:'latest'});}catch{throw new Error('AI 绘图代码存在语法错误，未应用。');}
+      let program;try{program=parse(item.value,{ecmaVersion:'latest'});}catch{throw new Error('AI 绘图代码存在语法错误，未应用。');}
+      const declaresName=program.body.some(node=>node.type==='FunctionDeclaration'&&node.id?.name===target.name||node.type==='VariableDeclaration'&&node.declarations.some(declaration=>declaration.id.type==='Identifier'&&declaration.id.name===target.name));
+      if(!declaresName)throw new Error(`AI 绘图代码未保留函数 ${target.name}，未应用。`);
       target.func=item.value;
     } else throw new Error('AI 尝试修改不支持的字段，已阻止。');
     return {path:item.path,value:item.value};
